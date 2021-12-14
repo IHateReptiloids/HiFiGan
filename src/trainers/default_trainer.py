@@ -130,7 +130,7 @@ class DefaultTrainer:
             if self._train_log_age == self._train_log_freq:
                 self._train_log_age = 0
                 gt_spec, gt_wav, out_spec, out_wav = self._log_audio(
-                    specs, wavs, out_specs, out_wavs
+                    specs.cpu(), wavs.cpu(), out_specs, out_wavs
                 )
                 wandb_data.update({
                     'train/gt_spec': gt_spec,
@@ -157,7 +157,7 @@ class DefaultTrainer:
 
             self._val_log_age += 1
             if self._val_log_age == self._val_log_freq:
-                table.add_data(*self._log_audio(specs, wavs,
+                table.add_data(*self._log_audio(specs.cpu(), wavs.cpu(),
                                                 out_specs, out_wavs))
         wandb_data = {
             'val/table': table,

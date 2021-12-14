@@ -34,9 +34,9 @@ train_loader = torch.utils.data.DataLoader(train_ds, config.train_batch_size,
 val_loader = torch.utils.data.DataLoader(val_ds, config.val_batch_size,
                                          shuffle=True, collate_fn=collate)
 
-g = Generator(config)
+g = Generator(config).to(config.device)
 summary(g)
-d = Discriminator(config)
+d = Discriminator(config).to(config.device)
 summary(d)
 opt_g = torch.optim.AdamW(g.parameters(), lr=config.initial_lr,
                           betas=config.betas,

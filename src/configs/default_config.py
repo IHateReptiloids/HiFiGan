@@ -37,6 +37,7 @@ class DefaultConfig:
     hop_length: int = 256
     n_fft: int = 1024
     n_mels: int = 80
+    pad_mode: str = 'constant'
     power: float = 1.0
     sample_rate: int = 22050
     segment_size: int = 8192

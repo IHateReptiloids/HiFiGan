@@ -15,7 +15,8 @@ class Wav2Spec(nn.Module):
             f_min=config.f_min,
             f_max=config.f_max,
             n_mels=config.n_mels,
-            power=config.power
+            power=config.power,
+            pad_mode=config.pad_mode
         )
 
         # Default `torchaudio` mel basis uses HTK formula.

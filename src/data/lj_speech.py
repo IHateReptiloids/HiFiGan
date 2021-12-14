@@ -2,7 +2,6 @@ from pathlib import Path
 
 import numpy as np
 import torch
-import torch.nn.functional as F
 import torchaudio
 
 
@@ -45,9 +44,7 @@ class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
         return super().__len__()
 
     def _cut(self, wav):
-        if self.segment_size is None:
+        if self.segment_size is None or len(wav) <= self.segment_size:
             return wav
-        if len(wav) <= self.segment_size:
-            return F.pad(wav, (0, self.segment_size - len(wav)))
         start_ind = torch.randint(len(wav) - self.segment_size, (1,)).item()
         return wav[start_ind:start_ind + self.segment_size]

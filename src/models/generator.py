@@ -9,18 +9,19 @@ class Generator(nn.Module):
         super().__init__()
         layers = []
 
-        prenet = nn.Conv1d(config.n_mels, config.channels[0],
-                           config.prenet_ksize, padding='same')
+        prenet = nn.Conv1d(config.n_mels, config.gen_channels[0],
+                           config.gen_prenet_ksize, padding='same')
         init_conv(prenet)
         layers.append(weight_norm(prenet))
 
-        assert config.n_layers == len(config.channels) - 1 == \
-            len(config.ksizes) == len(config.paddings) == len(config.strides)
+        assert config.gen_n_layers == len(config.gen_channels) - 1 == \
+            len(config.gen_ksizes) == len(config.gen_paddings) == \
+            len(config.gen_strides)
         for (in_c, out_c), ksize, padding, stride in zip(
-            pairwise(config.channels),
-            config.ksizes,
-            config.paddings,
-            config.strides
+            pairwise(config.gen_channels),
+            config.gen_ksizes,
+            config.gen_paddings,
+            config.gen_strides
         ):
             layers.append(nn.LeakyReLU(config.relu_slope))
             conv = nn.ConvTranspose1d(in_c, out_c, ksize, stride, padding)
@@ -29,8 +30,8 @@ class Generator(nn.Module):
             layers.append(MRF(out_c, config))
 
         layers.append(nn.LeakyReLU(config.relu_slope))
-        postnet = nn.Conv1d(config.channels[-1], 1, config.postnet_ksize,
-                            padding='same')
+        postnet = nn.Conv1d(config.gen_channels[-1], 1,
+                            config.gen_postnet_ksize, padding='same')
         init_conv(postnet)
         layers.append(weight_norm(postnet))
         layers.append(nn.Tanh())
@@ -49,7 +50,8 @@ class MRF(nn.Module):
         for dilations, kernel_size in zip(config.resblock_dilations,
                                           config.resblock_ksizes):
             self.res_blocks.append(
-                ResBlock(channels, config.relu_slope, kernel_size, dilations)
+                ResBlock(channels, config.relu_slope,
+                         kernel_size, dilations)
             )
 
     def forward(self, x):

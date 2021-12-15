@@ -23,7 +23,6 @@ seed_all(config.random_seed)
 
 train_ds = LJSpeechDataset(config.segment_size, config.data_path,
                            TRAIN_INDICES, config.device)
-train_ds._indices = train_ds._indices[:config.train_batch_size]
 
 val_ds = LJSpeechDataset(None, config.data_path,
                          VAL_INDICES, config.device)
@@ -46,9 +45,9 @@ opt_d = torch.optim.AdamW(d.parameters(), lr=config.initial_lr,
                           weight_decay=config.weight_decay)
 
 epoch_num_iters = len(train_ds) // config.train_batch_size
-scheduler_g = torch.optim.lr_scheduler.StepLR(opt_g, epoch_num_iters * 3,
+scheduler_g = torch.optim.lr_scheduler.StepLR(opt_g, epoch_num_iters,
                                               config.lr_decay)
-scheduler_d = torch.optim.lr_scheduler.StepLR(opt_d, epoch_num_iters * 3,
+scheduler_d = torch.optim.lr_scheduler.StepLR(opt_d, epoch_num_iters,
                                               config.lr_decay)
 
 wav2spec = Wav2Spec(config)

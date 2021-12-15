@@ -46,5 +46,5 @@ class DefaultConfig:
     num_epochs: int = 1000
     train_batch_size: int = 16
     train_log_freq: int = 3000
-    val_batch_size: int = 16
-    val_log_freq: int = 10
+    val_batch_size: int = 4
+    val_log_freq: int = 40

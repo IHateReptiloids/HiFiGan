@@ -7,7 +7,7 @@ import torch
 @dataclass
 class DefaultConfig:
     # Meta params
-    checkpointing_freq: int = 1000
+    checkpointing_freq: int = 5
     checkpoints_path: str = 'checkpoints/'
     data_path: str = 'data/lj_speech/'
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -62,8 +62,9 @@ class DefaultConfig:
     sd_relu_slope: float = 0.1
     sd_strides: Tuple[int] = (1, 2, 2, 4, 4, 1, 1)
     # Training params
-    num_epochs: int = 1000
+    epoch_num_iters: int = 5000
+    num_epochs: int = 100
     train_batch_size: int = 16
-    train_log_freq: int = 3000
+    train_log_freq: int = 500
     val_batch_size: int = 4
     val_log_freq: int = 40

@@ -6,7 +6,7 @@ from torchinfo import summary
 import wandb
 
 from src.configs import DefaultConfig
-from src.data import collate, LJSpeechDataset
+from src.data import collate, LJSpeechDataset, VariableLengthLoader
 from src.models import Discriminator, Generator
 from src.trainers import DefaultTrainer
 from src.utils import seed_all
@@ -30,6 +30,8 @@ val_ds = LJSpeechDataset(None, config.data_path,
 train_loader = torch.utils.data.DataLoader(train_ds, config.train_batch_size,
                                            shuffle=True, collate_fn=collate,
                                            drop_last=True)
+train_loader = VariableLengthLoader(train_loader, config.epoch_num_iters)
+
 val_loader = torch.utils.data.DataLoader(val_ds, config.val_batch_size,
                                          shuffle=True, collate_fn=collate)
 
@@ -44,10 +46,9 @@ opt_d = torch.optim.AdamW(d.parameters(), lr=config.initial_lr,
                           betas=config.betas,
                           weight_decay=config.weight_decay)
 
-epoch_num_iters = len(train_ds) // config.train_batch_size
-scheduler_g = torch.optim.lr_scheduler.StepLR(opt_g, epoch_num_iters,
+scheduler_g = torch.optim.lr_scheduler.StepLR(opt_g, config.epoch_num_iters,
                                               config.lr_decay)
-scheduler_d = torch.optim.lr_scheduler.StepLR(opt_d, epoch_num_iters,
+scheduler_d = torch.optim.lr_scheduler.StepLR(opt_d, config.epoch_num_iters,
                                               config.lr_decay)
 
 wav2spec = Wav2Spec(config)

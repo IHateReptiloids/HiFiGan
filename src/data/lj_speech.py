@@ -10,38 +10,29 @@ class LJSpeechDataset(torchaudio.datasets.LJSPEECH):
         self,
         segment_size,
         root='data/lj_speech',
-        indices_path=None,
-        device=torch.device('cpu')
+        indices_path=None
     ):
         root = Path(root)
         root.mkdir(parents=True, exist_ok=True)
         super().__init__(root=root, download=True)
 
         self.segment_size = segment_size
-        self._indices = None
         if indices_path is not None:
-            self._indices = np.loadtxt(indices_path, dtype=np.int32)
-        self.device = device
+            indices = np.loadtxt(indices_path, dtype=np.int32)
+        else:
+            indices = np.arange(super().__len__())
 
-        self._cache = {}
+        self._data = []
+        for index in indices:
+            wav, _, _, _ = super().__getitem__(index)
+            self._data.append(wav.squeeze())
 
     def __getitem__(self, index: int):
-        if self._indices is not None:
-            index = self._indices[index]
-
-        wav = self._cache.get(index)
-        if wav is None:
-            wav, _, _, _ = super().__getitem__(index)
-            wav = wav.to(self.device).squeeze()
-            self._cache[index] = wav
-
-        wav = self._cut(wav)
-        return wav
+        wav = self._data[index]
+        return self._cut(wav)
 
     def __len__(self):
-        if self._indices is not None:
-            return len(self._indices)
-        return super().__len__()
+        return len(self._data)
 
     def _cut(self, wav):
         if self.segment_size is None or len(wav) <= self.segment_size:

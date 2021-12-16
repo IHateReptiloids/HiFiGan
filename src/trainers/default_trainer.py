@@ -180,8 +180,9 @@ class DefaultTrainer:
                 fname = f'state{self.scheduler_d.last_epoch}.pth'
                 path = self._checkpoints_path / fname
                 print(f'Saving checkpoint after epoch {i} to {str(path)}')
+                path.parent.mkdir(parents=True, exist_ok=True)
                 torch.save(self.state_dict(), path)
-                wandb.save(path)
+                wandb.save(str(path))
             print('-' * 100)
 
     def train_epoch(self):
@@ -189,6 +190,7 @@ class DefaultTrainer:
         self.d.train()
         total_loss = 0
         for wavs in tqdm(self.train_loader):
+            wavs = wavs.to(self.config.device)
             specs = self.wav2spec(wavs)
             d_loss, g_loss, out_specs, out_wavs = self.process_batch(
                 specs, wavs, train=True
@@ -225,6 +227,7 @@ class DefaultTrainer:
         table = wandb.Table(columns=['gt_spec', 'gt_wav',
                                      'out_spec', 'out_wav'])
         for wavs in tqdm(self.val_loader):
+            wavs = wavs.to(self.config.device)
             specs = self.wav2spec(wavs)
             out_specs, out_wavs = self.process_batch(specs, wavs, train=False)
 

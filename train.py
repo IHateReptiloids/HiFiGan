@@ -2,6 +2,7 @@ from pathlib import Path
 
 from argparse_dataclass import ArgumentParser
 import torch
+from torch.utils.data import DataLoader
 from torchinfo import summary
 import wandb
 
@@ -22,18 +23,18 @@ seed_all(config.random_seed)
 
 
 train_ds = LJSpeechDataset(config.segment_size, config.data_path,
-                           TRAIN_INDICES, config.device)
+                           TRAIN_INDICES)
 
-val_ds = LJSpeechDataset(None, config.data_path,
-                         VAL_INDICES, config.device)
+val_ds = LJSpeechDataset(None, config.data_path, VAL_INDICES)
 
-train_loader = torch.utils.data.DataLoader(train_ds, config.train_batch_size,
-                                           shuffle=True, collate_fn=collate,
-                                           drop_last=True)
+train_loader = DataLoader(train_ds, config.train_batch_size,
+                          shuffle=True, collate_fn=collate,
+                          num_workers=config.train_num_workers, drop_last=True)
 train_loader = VariableLengthLoader(train_loader, config.epoch_num_iters)
 
-val_loader = torch.utils.data.DataLoader(val_ds, config.val_batch_size,
-                                         shuffle=True, collate_fn=collate)
+val_loader = DataLoader(val_ds, config.val_batch_size,
+                        shuffle=True, collate_fn=collate,
+                        num_workers=config.val_num_workers)
 
 g = Generator(config).to(config.device)
 summary(g)

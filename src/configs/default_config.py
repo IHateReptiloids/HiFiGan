@@ -70,5 +70,7 @@ class DefaultConfig:
     num_epochs: int = 100
     train_batch_size: int = 16
     train_log_freq: int = 500
+    train_num_workers: int = 4
     val_batch_size: int = 4
     val_log_freq: int = 40
+    val_num_workers: int = 4

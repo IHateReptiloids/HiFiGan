@@ -46,9 +46,10 @@ opt_d = torch.optim.AdamW(d.parameters(), lr=config.initial_lr,
                           betas=config.betas,
                           weight_decay=config.weight_decay)
 
-scheduler_g = torch.optim.lr_scheduler.StepLR(opt_g, config.epoch_num_iters,
+step_size = len(train_ds) // config.train_batch_size
+scheduler_g = torch.optim.lr_scheduler.StepLR(opt_g, step_size,
                                               config.lr_decay)
-scheduler_d = torch.optim.lr_scheduler.StepLR(opt_d, config.epoch_num_iters,
+scheduler_d = torch.optim.lr_scheduler.StepLR(opt_d, step_size,
                                               config.lr_decay)
 
 wav2spec = Wav2Spec(config)

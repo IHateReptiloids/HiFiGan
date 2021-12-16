@@ -31,6 +31,10 @@ class DefaultConfig:
     resblock_dilations: Tuple[Tuple[Tuple[int]]] = \
         (((1, 1), (3, 1), (5, 1)),) * 3
     resblock_ksizes: Tuple[int] = (3, 7, 11)
+    # Loss params
+    gan_coef: float = 1.0
+    fm_coef: float = 2.0
+    mel_coef: float = 45.0
     # MelSpec params
     f_min: int = 0
     f_max: int = 8000

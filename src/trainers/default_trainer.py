@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from itertools import chain
 from pathlib import Path
 
 from matplotlib import pyplot as plt
@@ -6,6 +7,49 @@ import torch
 import torch.nn.functional as F
 from tqdm import tqdm
 import wandb
+
+
+def fm_loss(fake_acts, real_acts):
+    '''
+    fake_acts is List[List[Tensor]] with feature maps
+    so is real_acts
+    '''
+    total_loss = 0
+    fake_acts = tuple(chain(*fake_acts))
+    real_acts = tuple(chain(*real_acts))
+    assert len(fake_acts) == len(real_acts)
+    for fake, real in zip(fake_acts, real_acts):
+        assert fake.shape == real.shape
+        total_loss += F.l1_loss(fake, real)
+    return total_loss
+
+
+def lsgan_d_loss(fake_out, real_out):
+    '''
+    fake_out is List[Tensor]
+    so is real_out
+    '''
+    total_loss = 0
+    assert len(fake_out) == len(real_out)
+    for fake, real in zip(fake_out, real_out):
+        assert fake.shape == real.shape
+        total_loss += F.mse_loss(fake, torch.zeros_like(fake))
+        total_loss += F.mse_loss(real, torch.ones_like(real))
+    return total_loss
+
+
+def lsgan_g_loss(fake_out):
+    '''
+    fake_out is List[Tensor]
+    '''
+    total_loss = 0
+    for fake in fake_out:
+        total_loss += F.mse_loss(fake, torch.ones_like(fake))
+    return total_loss
+
+
+def melspec_loss(fake, real):
+    return F.l1_loss(fake, real)
 
 
 def normalize_img(img):
@@ -69,21 +113,51 @@ class DefaultTrainer:
 
     def process_batch(self, specs, wavs, train: bool):
         out_wavs = self.g(specs).squeeze(dim=1)
-        out_specs = self.wav2spec(out_wavs).squeeze(dim=1)
+        out_specs = self.wav2spec(out_wavs)
         if train:
             assert out_specs.shape == specs.shape
             assert out_wavs.shape == wavs.shape
+            self.d.unfreeze()
+            self.opt_d.zero_grad()
 
-        loss = F.l1_loss(out_specs, specs) * 45.0
+        mpd_real_outs, _ = self.d.mpd(wavs)
+        mpd_fake_outs, _ = self.d.mpd(out_wavs.detach())
+        mpd_loss = lsgan_d_loss(mpd_fake_outs, mpd_real_outs)
+
+        msd_real_outs, _ = self.d.msd(wavs)
+        msd_fake_outs, _ = self.d.msd(out_wavs.detach())
+        msd_loss = lsgan_d_loss(msd_fake_outs, msd_real_outs)
+
+        d_loss = (mpd_loss + msd_loss) * self.config.gan_coef
+        if train:
+            d_loss.backward()
+            self.opt_d.step()
+            self.scheduler_d.step()
+            self.d.freeze()
+
+        mel_loss = melspec_loss(out_specs, specs) * self.config.mel_coef
+
+        mpd_real_outs, mpd_real_acts = self.d.mpd(wavs)
+        mpd_fake_outs, mpd_fake_acts = self.d.mpd(out_wavs)
+        msd_real_outs, msd_real_acts = self.d.msd(wavs)
+        msd_fake_outs, msd_fake_acts = self.d.msd(out_wavs)
+
+        fm_loss_ = fm_loss(mpd_fake_acts, mpd_real_acts)
+        fm_loss_ += fm_loss(msd_fake_acts, msd_real_acts)
+        fm_loss_ *= self.config.fm_coef
+
+        mpd_loss = lsgan_g_loss(mpd_fake_outs) * self.config.gan_coef
+        msd_loss = lsgan_g_loss(msd_fake_outs) * self.config.gan_coef
+
+        g_loss = mel_loss + fm_loss_ + mpd_loss + msd_loss
         if train:
             self.opt_g.zero_grad()
-            loss.backward()
+            g_loss.backward()
             self.opt_g.step()
             self.scheduler_g.step()
 
-            self.scheduler_d.step()
-
-        return loss.item(), out_specs.detach().cpu(), out_wavs.detach().cpu()
+        total_loss = d_loss.item() + g_loss.item()
+        return total_loss, out_specs.detach().cpu(), out_wavs.detach().cpu()
 
     def state_dict(self):
         sd = OrderedDict()

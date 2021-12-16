@@ -23,13 +23,13 @@ class Generator(nn.Module):
             config.gen_paddings,
             config.gen_strides
         ):
-            layers.append(nn.LeakyReLU(config.relu_slope))
+            layers.append(nn.LeakyReLU(config.gen_relu_slope))
             conv = nn.ConvTranspose1d(in_c, out_c, ksize, stride, padding)
             init_conv(conv)
             layers.append(weight_norm(conv))
             layers.append(MRF(out_c, config))
 
-        layers.append(nn.LeakyReLU(config.relu_slope))
+        layers.append(nn.LeakyReLU(config.gen_relu_slope))
         postnet = nn.Conv1d(config.gen_channels[-1], 1,
                             config.gen_postnet_ksize, padding='same')
         init_conv(postnet)
@@ -50,7 +50,7 @@ class MRF(nn.Module):
         for dilations, kernel_size in zip(config.resblock_dilations,
                                           config.resblock_ksizes):
             self.res_blocks.append(
-                ResBlock(channels, config.relu_slope,
+                ResBlock(channels, config.gen_relu_slope,
                          kernel_size, dilations)
             )
 

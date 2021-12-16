@@ -35,8 +35,7 @@ class ScaleDiscriminator(nn.Module):
         norm_func = spectral_norm if scale == 1 else weight_norm
         channels = [1] + list(config.sd_channels)
         assert len(config.sd_channels) == len(config.sd_groups) == \
-            len(config.sd_ksizes) == len(config.sd_paddings) == \
-            len(config.sd_strides)
+            len(config.sd_ksizes) == len(config.sd_strides)
         for (in_c, out_c), groups, ksize, stride in zip(
             pairwise(channels),
             config.sd_groups,
@@ -45,7 +44,7 @@ class ScaleDiscriminator(nn.Module):
         ):
             self.convs.append(norm_func(
                 nn.Conv1d(in_c, out_c, ksize, stride,
-                          padding='same', groups=groups)
+                          padding=(ksize // 2), groups=groups)
             ))
 
         self.proj = norm_func(nn.Conv1d(channels[-1], 1, config.sd_proj_ksize,

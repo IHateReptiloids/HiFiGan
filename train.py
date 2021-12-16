@@ -67,6 +67,6 @@ trainer = DefaultTrainer(
     scheduler_d,
     wav2spec,
     train_loader,
-    None
+    val_loader
 )
 trainer.train(config.num_epochs)

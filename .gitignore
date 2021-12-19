@@ -133,3 +133,4 @@ dmypy.json
 checkpoints/
 data/lj_speech/LJSpeech-1.1
 wandb/
+*.wav
